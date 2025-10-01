@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>YouTube Unblocker — Hashed Passwords</title>
+<style>body{font-family:Arial,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#111;color:#fff}input{width:300px;padding:10px;border-radius:5px;border:none;margin:8px 0}button{padding:10px 15px;border:none;border-radius:5px;background:#e62117;color:white;font-weight:700;cursor:pointer}iframe{margin-top:20px;width:560px;height:315px;border:none;border-radius:10px}.small{font-size:0.9rem;color:#ccc;margin-top:6px}</style>
+</head><body>
+  <h1>YouTube Unblocker</h1>
+  <div id="loginContainer">
+    <input type="password" id="passwordInput" placeholder="Enter password" />
+    <div><button onclick="checkPassword()">Login</button></div>
+    <div class="small">Using SHA-256 hashes from <code>config.js</code></div>
+  </div>
+
+  <div id="appContainer" style="display:none;">
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="text" id="ytLink" placeholder="YouTube link" />
+      <button onclick="loadVideo()">Load Video</button>
+      <button onclick="logout()" style="background:#555">Logout</button>
+    </div>
+    <div id="videoContainer"></div>
+  </div>
+
+<script src="config.js"></script>
+<script>
+  const SESSION_KEY = "yt_unblocker_logged_in";
+
+  async function sha256hex(str) {
+    const enc = new TextEncoder();
+    const data = enc.encode(str);
+    const hash = await crypto.subtle.digest('SHA-256', data);
+    // convert to hex
+    return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  function init() {
+    if (localStorage.getItem(SESSION_KEY) === "yes") showApp();
+  }
+
+  async function checkPassword(){
+    const entered = document.getElementById("passwordInput").value;
+    if (!entered) return alert("Enter a password");
+
+    if (!config || !Array.isArray(config.passwordHashes)) {
+      return alert("Config error: passwordHashes array missing in config.js");
+    }
+
+    const h = await sha256hex(entered);
+    if (config.passwordHashes.includes(h)) {
+      localStorage.setItem(SESSION_KEY, "yes");
+      showApp();
+    } else {
+      alert("Wrong password!");
+    }
+  }
+
+  function showApp(){
+    document.getElementById("loginContainer").style.display = "none";
+    document.getElementById("appContainer").style.display = "block";
+  }
+
+  function logout(){
+    localStorage.removeItem(SESSION_KEY);
+    document.getElementById("appContainer").style.display = "none";
+    document.getElementById("loginContainer").style.display = "block";
+    document.getElementById("passwordInput").value = "";
+    document.getElementById("videoContainer").innerHTML = "";
+  }
+
+  function loadVideo() {
+    const url = document.getElementById('ytLink').value.trim();
+    let videoId = "";
+
+    if (!url) return alert("Enter a YouTube link");
+
+    if (url.includes("v=")) {
+      videoId = url.split("v=")[1].split("&")[0];
+    } else if (url.includes("youtu.be/")) {
+      videoId = url.split("youtu.be/")[1].split("?")[0];
+    } else {
+      const maybeId = url.match(/[A-Za-z0-9_-]{11}/);
+      if (maybeId) videoId = maybeId[0];
+    }
+
+    if (videoId) {
+      document.getElementById('videoContainer').innerHTML =
+        `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`;
+    } else {
+      alert("Invalid YouTube link or id");
+    }
+  }
+
+  init();
+</script>
+</body></html>
