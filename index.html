@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>YouTube Unblocker — Multi Passwords</title>
+  <title>YouTube Unblocker</title>
   <style>
-    body{font-family:Arial,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#111;color:#fff;padding:20px}
-    input{width:320px;padding:10px;border-radius:6px;border:none;margin:8px 0}
-    button{padding:10px 14px;border:none;border-radius:6px;background:#e62117;color:white;font-weight:700;cursor:pointer}
-    iframe{margin-top:20px;width:560px;height:315px;border:none;border-radius:10px}
-    .controls{display:flex;gap:10px;align-items:center}
-    .small{font-size:0.85rem;color:#ccc;margin-top:8px}
+    body {font-family:Arial,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#111;color:#fff;padding:20px}
+    input {width:320px;padding:10px;border-radius:6px;border:none;margin:8px 0}
+    button {padding:10px 14px;border:none;border-radius:6px;background:#e62117;color:white;font-weight:700;cursor:pointer}
+    iframe {margin-top:20px;width:560px;height:315px;border:none;border-radius:10px}
+    .controls {display:flex;gap:10px;align-items:center}
+    .small {font-size:0.85rem;color:#ccc;margin-top:8px}
   </style>
 </head>
 <body>
@@ -19,15 +19,13 @@
   <!-- LOGIN -->
   <div id="loginContainer">
     <input type="password" id="passwordInput" placeholder="Enter password" />
-    <div style="margin-top:6px">
-      <button onclick="checkPassword()">Login</button>
-    </div>
-    <div class="small">Passwords loaded from <code>config.js</code> — add multiple strings to the <code>passwords</code> array.</div>
+    <div><button onclick="checkPassword()">Login</button></div>
+    <div class="small">Passwords are stored in <code>config.js</code></div>
   </div>
 
-  <!-- APP (hidden until login) -->
-  <div id="appContainer" style="display:none; width: 100%; max-width: 760px;">
-    <div class="controls" style="margin-top:12px">
+  <!-- APP -->
+  <div id="appContainer" style="display:none;max-width:760px;width:100%">
+    <div class="controls">
       <input type="text" id="ytLink" placeholder="YouTube link or ID" />
       <button onclick="loadVideo()">Load Video</button>
       <button onclick="logout()" style="background:#555">Logout</button>
@@ -37,45 +35,29 @@
 
   <script src="config.js"></script>
   <script>
-    // Local session key so user doesn't have to re-login during a browser session
     const SESSION_KEY = "yt_unblocker_logged_in";
 
-    // Initialize: if session present, show app
     (function init(){
-      try {
-        if (localStorage.getItem(SESSION_KEY) === "yes") showApp();
-      } catch(e) {
-        // some browsers or privacy modes may throw on localStorage access
-        console.warn("LocalStorage not available:", e);
-      }
+      if (localStorage.getItem(SESSION_KEY) === "yes") showApp();
     })();
 
     function checkPassword() {
       const entered = document.getElementById("passwordInput").value;
-      if (!entered) return alert("Enter a password");
-
-      // validate config shape
-      if (!window.config || !Array.isArray(config.passwords)) {
-        return alert("Config error: open config.js and add a passwords array (see comments).");
-      }
-
-      // Accept if entered matches any password in config.passwords
       if (config.passwords.includes(entered)) {
-        try { localStorage.setItem(SESSION_KEY, "yes"); } catch(e){ /* ignore */ }
+        localStorage.setItem(SESSION_KEY, "yes");
         showApp();
       } else {
         alert("Wrong password!");
       }
     }
 
-    function showApp(){
+    function showApp() {
       document.getElementById("loginContainer").style.display = "none";
       document.getElementById("appContainer").style.display = "block";
-      document.getElementById("passwordInput").value = "";
     }
 
-    function logout(){
-      try { localStorage.removeItem(SESSION_KEY); } catch(e){ /* ignore */ }
+    function logout() {
+      localStorage.removeItem(SESSION_KEY);
       document.getElementById("appContainer").style.display = "none";
       document.getElementById("loginContainer").style.display = "block";
       document.getElementById("videoContainer").innerHTML = "";
@@ -83,17 +65,13 @@
 
     function loadVideo() {
       const url = document.getElementById('ytLink').value.trim();
-      if (!url) return alert("Enter a YouTube link or ID");
-
       let videoId = "";
 
-      // Common YouTube formats:
       if (url.includes("v=")) {
         videoId = url.split("v=")[1].split("&")[0];
       } else if (url.includes("youtu.be/")) {
         videoId = url.split("youtu.be/")[1].split("?")[0];
       } else {
-        // maybe just the id pasted
         const maybeId = url.match(/[A-Za-z0-9_-]{11}/);
         if (maybeId) videoId = maybeId[0];
       }
@@ -102,7 +80,7 @@
         document.getElementById('videoContainer').innerHTML =
           `<iframe src="https://www.youtube.com/embed/${videoId}" allowfullscreen></iframe>`;
       } else {
-        alert("Invalid YouTube link or id");
+        alert("Invalid YouTube link or ID");
       }
     }
   </script>
